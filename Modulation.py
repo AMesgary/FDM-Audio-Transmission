@@ -28,13 +28,21 @@ fft2 = np.fft.fft(audio2_shifted)
 fft3 = np.fft.fft(audio3_shifted)
 #plt.stem(freq, np.abs(X), linefmt='b-', markerfmt='bo', basefmt='k-')
 
-fft_sum = fft1 + fft2 + fft3
+fdm_signal = fft1 + fft2 + fft3
+
+y_total = audio1_shifted + audio2_shifted + audio3_shifted
+
+fdm_fft = np.fft.fft(y_total)
+
 
 #plt.stem(freq, np.abs(fft_sum), linefmt='b-', markerfmt='bo', basefmt='k-')
-plt.plot(freq, np.abs(fft_sum))
+plt.plot(freq, np.abs(fdm_signal))
+
+
+
+wavfile.write("fdm_signal.wav", fs, fdm_signal.astype(np.float32))
 
 plt.xlabel("Frequency (Hz)")
 plt.ylabel("Magnitude")
-plt.title("FFT of a sinusoid")
 plt.grid(True)
 plt.show()
