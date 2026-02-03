@@ -1,32 +1,86 @@
+import numpy as np
 from scipy import signal
 from scipy.io import wavfile
-from matplotlib import pyplot as plt 
-import numpy as np
+import matplotlib.pyplot as plt
 
-plt.figure()
+FS = 44100
+nyq = 0.5 * FS
+FC2 = 12000
+ORDER = 200
 
-fs, y_total = wavfile.read("y_total.wav")
+try:
+    fs, y_total = wavfile.read("y_total.wav")
+except FileNotFoundError:
+    exit("Error: y_total.wav not found.")
 
-nyq = 0.5 * fs
+
+# ========== BPF ==========
+
 low, high = 9000, 15000
-order = 200
-b_bp = signal.firwin(order+1, [low/nyq, high/nyq], pass_zero=False)
+
+b_bp = signal.firwin(ORDER + 1, [low/nyq, high/nyq], pass_zero=False)
+
 extracted_y2 = signal.lfilter(b_bp, 1, y_total)
 
-wavfile.write("extracted_y2.wav", fs, extracted_y2.astype(np.float32))
+wavfile.write("extracted_y2.wav", FS, extracted_y2.astype(np.float32))
 
-fc2 = 12000
-t = np.arange(len(y_total)) / fs
-demod_raw = extracted_y2 * np.cos(2 * np.pi * fc2 * t) * 2
-b_lp = signal.firwin(201, 4000/nyq)
+w, h = signal.freqz(b_bp, worN=8000)
+freq_hz = (w * FS) / (2 * np.pi)
+response_db = 20 * np.log10(np.maximum(np.abs(h), 1e-5)) # جلوگیری از log(0)
+
+plt.figure(figsize=(10, 5))
+plt.plot(freq_hz, response_db)
+plt.title("Frequency Response of Bandpass Filter (9kHz - 15kHz)")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Gain (dB)")
+plt.grid(True)
+plt.axvline(low, color='g', linestyle='--', label='Cutoff 9k')
+plt.axvline(high, color='r', linestyle='--', label='Cutoff 15k')
+plt.legend()
+plt.xlim(0, FS/2)
+plt.ylim(-80, 5)
+
+plt.savefig("plot_bpf_response.png")
+plt.close()
+
+# ========== Demodulation ==========
+
+t = np.arange(len(y_total)) / FS
+
+demod_raw = extracted_y2 * np.cos(2 * np.pi * FC2 * t) * 2
+
+lpf_cutoff = 4000
+b_lp = signal.firwin(ORDER + 1, lpf_cutoff/nyq)
+
 recovered_audio2 = signal.lfilter(b_lp, 1, demod_raw)
 
-wavfile.write("recovered_audio2.wav", fs, recovered_audio2.astype(np.float32))
+wavfile.write("recovered_audio2.wav", FS, recovered_audio2.astype(np.float32))
 
-_, audio_2 = wavfile.read("audio_2.wav")
+try:
+    _, audio_original = wavfile.read("audio_2.wav")
+    
+    if audio_original.dtype == np.int16:
+        audio_original = audio_original.astype(np.float32) / 32768.0
+    else:
+        audio_original = audio_original.astype(np.float32)
 
-plt.figure()
-plt.plot(t, audio_2, color="r")
-plt.plot(t, recovered_audio2, color="b")
-plt.grid(True)
-plt.show()
+    min_len = min(len(audio_original), len(recovered_audio2))
+    t_plot = t[:min_len]
+    
+    plt.figure(figsize=(12, 6))
+    
+    plt.plot(t_plot, audio_original[:min_len], color='red', alpha=0.5, label="Original (Audio 2)")
+    
+    plt.plot(t_plot, recovered_audio2[:min_len], color='blue', alpha=0.6, label="Recovered (From Receiver)")
+    
+    plt.title("Time Domain Comparison: Original vs. Recovered Signal")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid(True)
+    
+    plt.savefig("plot_time_comparison.png")
+    plt.close()
+
+except FileNotFoundError:
+    pass
