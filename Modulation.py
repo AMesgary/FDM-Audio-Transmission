@@ -19,28 +19,16 @@ audio3_shifted = audio3 * np.cos(2 * np.pi * fc3 * t)
 
 fft1 = np.fft.fft(audio1_shifted)
 freq = np.fft.fftfreq(len(audio1_shifted), 1/fs)
-#plt.stem(freq, np.abs(X1), linefmt='r-', markerfmt='ro', basefmt='k-')
-
-
-fft2 = np.fft.fft(audio2_shifted)
-#plt.stem(freq, np.abs(X), linefmt='g-', markerfmt='go', basefmt='k-')
-
-fft3 = np.fft.fft(audio3_shifted)
-#plt.stem(freq, np.abs(X), linefmt='b-', markerfmt='bo', basefmt='k-')
-
-fdm_signal = fft1 + fft2 + fft3
 
 y_total = audio1_shifted + audio2_shifted + audio3_shifted
 
-fdm_fft = np.fft.fft(y_total)
+y_total_fft = np.fft.fft(y_total)
 
-
-#plt.stem(freq, np.abs(fft_sum), linefmt='b-', markerfmt='bo', basefmt='k-')
-plt.plot(freq, np.abs(fdm_signal))
+plt.plot(freq, np.abs(y_total_fft))
 
 
 
-wavfile.write("fdm_signal.wav", fs, fdm_signal.astype(np.float32))
+wavfile.write("y_total.wav", fs, y_total.astype(np.float32))
 
 plt.xlabel("Frequency (Hz)")
 plt.ylabel("Magnitude")
