@@ -2,7 +2,7 @@ from scipy.io import wavfile
 from matplotlib import pyplot as plt 
 import numpy as np
 
-bits = 3
+bits = 8
 
 fs, audio = wavfile.read("audio_1.wav")
 t = np.arange(len(audio)) / fs
