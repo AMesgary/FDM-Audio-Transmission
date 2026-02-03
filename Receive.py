@@ -23,3 +23,10 @@ recovered_audio2 = signal.lfilter(b_lp, 1, demod_raw)
 
 wavfile.write("recovered_audio2.wav", fs, recovered_audio2.astype(np.float32))
 
+_, audio_2 = wavfile.read("audio_2.wav")
+
+plt.figure()
+plt.plot(t, audio_2, color="r")
+plt.plot(t, recovered_audio2, color="b")
+plt.grid(True)
+plt.show()
