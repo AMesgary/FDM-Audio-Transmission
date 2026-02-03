@@ -26,7 +26,7 @@ wavfile.write("extracted_y2.wav", FS, extracted_y2.astype(np.float32))
 
 w, h = signal.freqz(b_bp, worN=8000)
 freq_hz = (w * FS) / (2 * np.pi)
-response_db = 20 * np.log10(np.maximum(np.abs(h), 1e-5)) # جلوگیری از log(0)
+response_db = 20 * np.log10(np.maximum(np.abs(h), 1e-5))
 
 plt.figure(figsize=(10, 5))
 plt.plot(freq_hz, response_db)

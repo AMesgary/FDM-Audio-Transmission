@@ -1,58 +1,46 @@
-from scipy.io import wavfile
-import scipy.signal as signal
-from matplotlib import pyplot as plt 
 import numpy as np
+import scipy.signal as signal
+from scipy.io import wavfile
+import matplotlib.pyplot as plt
 
+FS = 44100
+TARGET_FS_LOW = 22050
 
-def plot_fft(signal_data, fs, title):
-    N = len(signal_data)
-    yf = np.fft.rfft(signal_data)
-    xf = np.fft.rfftfreq(N, 1/fs)
-    
-    plt.figure(figsize=(10, 4))
-    plt.plot(xf, np.abs(yf))
-    plt.title(title)
-    plt.xlabel("Frequency (Hz)")
-    plt.ylabel("Magnitude")
-    plt.grid(True)
-    plt.show()
+try:
+    fs, y_total = wavfile.read("y_total.wav")
+except FileNotFoundError:
+    exit("Error: y_total.wav not found. Run Sender first.")
 
+num_samples_low = int(len(y_total) * TARGET_FS_LOW / FS)
 
-plt.figure()
-
-fs = 0
-fs, audio1 = wavfile.read("audio_1_8bit.wav")
-fs, audio2 = wavfile.read("audio_2_8bit.wav")
-fs, audio3 = wavfile.read("audio_3_8bit.wav")
-
-t = np.arange(len(audio1)) / fs
-
-fc1, fc2, fc3 = 5000, 12000, 19000
-
-audio1_shifted = audio1 * np.cos(2 * np.pi * fc1 * t)
-audio2_shifted = audio2 * np.cos(2 * np.pi * fc2 * t)
-audio3_shifted = audio3 * np.cos(2 * np.pi * fc3 * t)
-
-fft1 = np.fft.fft(audio1_shifted)
-freq = np.fft.fftfreq(len(audio1_shifted), 1/fs)
-
-y_total = audio1_shifted + audio2_shifted + audio3_shifted
-
-y_total_fft = np.fft.fft(y_total)
-
-#plt.plot(freq, np.abs(y_total_fft))
-
-
-target_fs_low = 22050 
-
-# Resample using scipy.signal.resample (simulates recording at lower rate)
-num_samples_low = int(len(y_total) * target_fs_low / fs)
 y_aliased = signal.resample(y_total, num_samples_low)
 
-# Plot spectra 
+def get_fft_data(sig, sample_rate):
+    N = len(sig)
+    yf = np.fft.fft(sig)
+    xf = np.fft.fftfreq(N, 1/sample_rate)
+    half_n = N // 2
+    return xf[:half_n], np.abs(yf)[:half_n]
 
+f_orig, mag_orig = get_fft_data(y_total, FS)
 
-plot_fft(y_total, fs, "Step 3: Original Sampling (fs=44100 Hz)")
-plot_fft(y_aliased, target_fs_low, f"Step 3: Undersampled (fs={target_fs_low} Hz) - Aliasing Visible")
+f_alias, mag_alias = get_fft_data(y_aliased, TARGET_FS_LOW)
 
-#wavfile.write("y_total.wav", fs, y_total.astype(np.float32))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+
+ax1.plot(f_orig, mag_orig, color='blue')
+ax1.set_title(f"Original Signal Spectrum (FS={FS} Hz) - No Aliasing")
+ax1.set_xlabel("Frequency (Hz)")
+ax1.set_ylabel("Magnitude")
+ax1.grid(True)
+
+ax2.plot(f_alias, mag_alias, color='red')
+ax2.set_title(f"Undersampled Signal Spectrum (FS={TARGET_FS_LOW} Hz) - Aliasing Visible")
+ax2.set_xlabel("Frequency (Hz)")
+ax2.set_ylabel("Magnitude")
+ax2.grid(True)
+
+plt.tight_layout()
+
+plt.savefig("plot_nyquist_analysis.png")
+plt.close()
