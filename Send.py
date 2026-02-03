@@ -1,6 +1,10 @@
+import os
 import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
+
+os.makedirs("data", exist_ok=True)
+os.makedirs("plots", exist_ok=True)
 
 FS = 44100
 FC = [5000, 12000, 19000]
@@ -15,9 +19,9 @@ def quantize_signal(audio, bits):
     audio_q = np.round(audio * Q) / Q
     return audio_q
 
-_, audio1 = wavfile.read("audio_1.wav")
-_, audio2 = wavfile.read("audio_2.wav")
-_, audio3 = wavfile.read("audio_3.wav")
+_, audio1 = wavfile.read("data/audio_1.wav")
+_, audio2 = wavfile.read("data/audio_2.wav")
+_, audio3 = wavfile.read("data/audio_3.wav")
 
 audio1 = normalize(audio1)
 audio2 = normalize(audio2)
@@ -28,7 +32,7 @@ audio3 = normalize(audio3)
 
 audio1_3bit = quantize_signal(audio1, 3)
 
-wavfile.write("audio_1_3bit.wav", FS, audio1_3bit.astype(np.float32))
+wavfile.write("data/audio_1_3bit.wav", FS, audio1_3bit.astype(np.float32))
 
 peak_indx = np.argmax(np.abs(audio1))
 half_window = int(0.1 * FS)
@@ -44,7 +48,7 @@ plt.plot(sample_time, audio1_3bit[lower_bound : upper_bound], color="r", alpha=0
 plt.title("Quantization Effect (200ms Window)")
 plt.legend()
 plt.grid(True)
-plt.savefig("plot_quantization_compare.png")
+plt.savefig("plots/plot_quantization_compare.png")
 plt.close()
 
 audio1_8bit = quantize_signal(audio1, 8)
@@ -73,7 +77,7 @@ plt.title("Spectrum of FDM Signal (y_total)")
 plt.xlabel("Frequency (Hz)")
 plt.ylabel("Magnitude")
 plt.grid(True)
-plt.savefig("plot_fdm_spectrum.png")
+plt.savefig("plots/plot_fdm_spectrum.png")
 plt.close()
 
-wavfile.write("y_total.wav", FS, y_total.astype(np.float32))
+wavfile.write("data/y_total.wav", FS, y_total.astype(np.float32))

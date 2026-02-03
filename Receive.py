@@ -1,7 +1,11 @@
+import os
 import numpy as np
 from scipy import signal
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
+
+os.makedirs("data", exist_ok=True)
+os.makedirs("plots", exist_ok=True)
 
 FS = 44100
 nyq = 0.5 * FS
@@ -9,7 +13,7 @@ FC2 = 12000
 ORDER = 200
 
 try:
-    fs, y_total = wavfile.read("y_total.wav")
+    fs, y_total = wavfile.read("data/y_total.wav")
 except FileNotFoundError:
     exit("Error: y_total.wav not found.")
 
@@ -22,7 +26,7 @@ b_bp = signal.firwin(ORDER + 1, [low/nyq, high/nyq], pass_zero=False)
 
 extracted_y2 = signal.lfilter(b_bp, 1, y_total)
 
-wavfile.write("extracted_y2.wav", FS, extracted_y2.astype(np.float32))
+wavfile.write("data/extracted_y2.wav", FS, extracted_y2.astype(np.float32))
 
 w, h = signal.freqz(b_bp, worN=8000)
 freq_hz = (w * FS) / (2 * np.pi)
@@ -40,7 +44,7 @@ plt.legend()
 plt.xlim(0, FS/2)
 plt.ylim(-80, 5)
 
-plt.savefig("plot_bpf_response.png")
+plt.savefig("plots/plot_bpf_response.png")
 plt.close()
 
 # ========== Demodulation ==========
@@ -54,10 +58,10 @@ b_lp = signal.firwin(ORDER + 1, lpf_cutoff/nyq)
 
 recovered_audio2 = signal.lfilter(b_lp, 1, demod_raw)
 
-wavfile.write("recovered_audio2.wav", FS, recovered_audio2.astype(np.float32))
+wavfile.write("data/recovered_audio2.wav", FS, recovered_audio2.astype(np.float32))
 
 try:
-    _, audio_original = wavfile.read("audio_2.wav")
+    _, audio_original = wavfile.read("data/audio_2.wav")
     
     if audio_original.dtype == np.int16:
         audio_original = audio_original.astype(np.float32) / 32768.0
@@ -79,7 +83,7 @@ try:
     plt.legend()
     plt.grid(True)
     
-    plt.savefig("plot_time_comparison.png")
+    plt.savefig("plots/plot_time_comparison.png")
     plt.close()
 
 except FileNotFoundError:

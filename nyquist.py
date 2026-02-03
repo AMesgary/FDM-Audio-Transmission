@@ -1,13 +1,17 @@
+import os
 import numpy as np
 import scipy.signal as signal
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 
+os.makedirs("data", exist_ok=True)
+os.makedirs("plots", exist_ok=True)
+
 FS = 44100
 TARGET_FS_LOW = 22050
 
 try:
-    fs, y_total = wavfile.read("y_total.wav")
+    fs, y_total = wavfile.read("data/y_total.wav")
 except FileNotFoundError:
     exit("Error: y_total.wav not found. Run Sender first.")
 
@@ -42,5 +46,5 @@ ax2.grid(True)
 
 plt.tight_layout()
 
-plt.savefig("plot_nyquist_analysis.png")
+plt.savefig("plots/plot_nyquist_analysis.png")
 plt.close()
