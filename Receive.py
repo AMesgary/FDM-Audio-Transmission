@@ -17,9 +17,6 @@ try:
 except FileNotFoundError:
     exit("Error: y_total.wav not found.")
 
-
-# ========== BPF ==========
-
 low, high = 9000, 15000
 
 b_bp = signal.firwin(ORDER + 1, [low/nyq, high/nyq], pass_zero=False)
@@ -28,26 +25,20 @@ extracted_y2 = signal.lfilter(b_bp, 1, y_total)
 
 wavfile.write("data/extracted_y2.wav", FS, extracted_y2.astype(np.float32))
 
-w, h = signal.freqz(b_bp, worN=8000)
-freq_hz = (w * FS) / (2 * np.pi)
-response_db = 20 * np.log10(np.maximum(np.abs(h), 1e-5))
-
 plt.figure(figsize=(10, 5))
-plt.plot(freq_hz, response_db)
-plt.title("Frequency Response of Bandpass Filter (9kHz - 15kHz)")
+y_fft = np.fft.fft(extracted_y2)
+freq = np.fft.fftfreq(len(extracted_y2), 1/FS)
+half_n = len(extracted_y2) // 2
+
+plt.plot(freq[:half_n], np.abs(y_fft)[:half_n])
+plt.title("Spectrum after Band-pass Filtering")
 plt.xlabel("Frequency (Hz)")
-plt.ylabel("Gain (dB)")
+plt.ylabel("Magnitude")
 plt.grid(True)
-plt.axvline(low, color='g', linestyle='--', label='Cutoff 9k')
-plt.axvline(high, color='r', linestyle='--', label='Cutoff 15k')
-plt.legend()
 plt.xlim(0, FS/2)
-plt.ylim(-80, 5)
 
-plt.savefig("plots/plot_bpf_response.png")
+plt.savefig("plots/plot_filtered_spectrum.png")
 plt.close()
-
-# ========== Demodulation ==========
 
 t = np.arange(len(y_total)) / FS
 
@@ -73,9 +64,9 @@ try:
     
     plt.figure(figsize=(12, 6))
     
-    plt.plot(t_plot, audio_original[:min_len], color='red', alpha=0.5, label="Original (Audio 2)")
+    plt.plot(t_plot, audio_original[:min_len], color='red', alpha=0.7, label="Original (Audio 2)")
     
-    plt.plot(t_plot, recovered_audio2[:min_len], color='blue', alpha=0.6, label="Recovered (From Receiver)")
+    plt.plot(t_plot, recovered_audio2[:min_len], color='blue', alpha=0.7, label="Recovered (From Receiver)")
     
     plt.title("Time Domain Comparison: Original vs. Recovered Signal")
     plt.xlabel("Time (s)")
