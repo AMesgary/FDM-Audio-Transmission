@@ -2,12 +2,12 @@
 
 A Python implementation of a complete Frequency Division Multiplexing (FDM) telecommunication chain. This project simulates the process of transmitting multiple audio signals simultaneously over a single channel by modulating them onto distinct carrier frequencies, and subsequently recovering a specific target signal using digital filters.
 
-## Features
+## Features & Technical Implementation
 
-* **Quantization Analysis:** Compares the effect of bit-depth on signal quality (8-bit vs. 3-bit) and visualizes quantization noise.
-* **FDM Modulation:** Modulates three separate audio channels onto 5kHz, 12kHz, and 19kHz carrier frequencies.
-* **Nyquist Theorem & Aliasing:** Demonstrates frequency folding and signal distortion by intentionally undersampling the composite signal.
-* **Signal Recovery:** Uses a custom FIR bandpass filter to isolate a specific channel, followed by synchronous demodulation and lowpass filtering to reconstruct the original audio.
+* **Quantization Analysis:** Reads the raw `.wav` files, normalizes the amplitude to a float32 range of [-1.0, 1.0], and implements a custom quantization function. The script mathematically maps the continuous audio values to discrete levels to simulate 8-bit depth for transmission and 3-bit depth to calculate and visualize quantization noise.
+* **FDM Modulation (Transmitter):** Implements Double Sideband Suppressed Carrier (DSB-SC) modulation using numpy array operations. The script generates time arrays based on the 44.1kHz sample rate, creates cosine wave arrays for the 5kHz, 12kHz, and 19kHz carriers, multiplies them element-wise with the 8-bit audio data, and sums them to create the single composite signal.
+* **Nyquist Theorem & Aliasing:** Uses the `scipy.signal.resample` function to intentionally downsample the composite signal from 44.1kHz to 22.05kHz. It then computes the Fast Fourier Transform using `np.fft.fft` and `fftfreq` to visually and mathematically demonstrate frequency folding when the sampling rate drops below the required Nyquist limit.
+* **Signal Recovery (Receiver):** Utilizes `scipy.signal.firwin` to design a 200th-order FIR bandpass filter (9kHz–15kHz) and applies it to the composite signal using `scipy.signal.lfilter` to isolate the 12kHz channel. Synchronous demodulation is achieved by multiplying the extracted array by the local carrier, followed by passing the result through a 4kHz FIR lowpass filter to reconstruct the original baseband audio.
 
 ## Requirements
 
